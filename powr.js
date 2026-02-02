@@ -153,3 +153,4 @@ function verifyBibliography() {
     `Bibliography VERIFIED ✅\n` +
     `${blocks.length} blocks valid, chained, mined, unexpired, and alphabetical.`;
 }
+

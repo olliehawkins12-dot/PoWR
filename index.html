@@ -108,12 +108,28 @@ Each reference must be computationally mined to introduce epistemic scarcity. By
 
 <h2>Formatted PoWR Reference</h2>
 <div id="output" class="output"></div>
-<div id="mineControls" class="hidden">
+<div id="mineControls" class="hiddens">
 <button onclick="startMining()">Mine</button>
 <button onclick="stopMining()">Stop</button>
 <div id="miningStatus"></div>
 </div>
 </div>
+<span id="maxSpeedToggle" style="font-family: 'Comic Sans MS', monospace; font-size: 16px; cursor: pointer; user-select: none; padding: 20; font-weight:bolder;">
+ MAX CPU SPEED <b style="color: blue;">[ ]</b>
+</span>
+
+<script>
+  let maxSpeedEnabled = false;
+  const toggleEl = document.getElementById('maxSpeedToggle');
+  toggleEl.onclick = () => {
+    maxSpeedEnabled = !maxSpeedEnabled;
+    toggleEl.innerHTML = maxSpeedEnabled 
+      ? 'MAX CPU SPEED <b style="color: blue;">[x]</b> ' 
+      : 'MAX CPU SPEED <b style="color: blue;">[ ]</b>';
+  };
+</script>
+
+
 
 <div id="verifyPage" class="hidden">
 <h1>PoWR Reference Verifier</h1>
@@ -204,13 +220,12 @@ function generatePoWR() {
 }
 
 function startMining() {
+  const useMaxSpeed = document.getElementById('maxSpeed')?.checked; // checkbox for max CPU
   const expirySec = parseInt(new FormData(document.getElementById('powrForm')).get('expiry'));
   const TWO_256 = 1n << 256n;
-
-  const hashesPerSec = 100n;      // 100 hashes/sec
-  const baseExpiry = 10800n;      // 3 hours in seconds
-  const desiredMiningTime = 1n;   // 1 second of mining corresponds to 3 hours
-
+  const hashesPerSec = 100n;
+  const baseExpiry = 10800n;
+  const desiredMiningTime = 1n;
   const expectedAttempts = (hashesPerSec * desiredMiningTime * BigInt(expirySec)) / baseExpiry;
   const maxHash = TWO_256 / expectedAttempts;
 
@@ -218,27 +233,57 @@ function startMining() {
   attempts = 0;
   codeValue = 0n;
 
-  miningInterval = setInterval(() => {
-    const hexCode = codeValue.toString(16).padStart(12, '0');
-    const dataToHash = generatedReference.replace(/\| 000000000000/, `| ${hexCode}`);
-    const hashHex = CryptoJS.SHA256(dataToHash).toString();
-    const hashValue = BigInt('0x' + hashHex);
-    attempts++;
-
-    statusDiv.innerHTML = `Code: <b>${hexCode}</b><br>Attempts: ${attempts}`;
-
-    if (hashValue < maxHash) {
-      clearInterval(miningInterval);
-      const finalRef = dataToHash + `[${hashHex}]`;
-      statusDiv.innerHTML += `<br><b>SUCCESS!</b>`;
-      document.getElementById('output').textContent = finalRef;
-      alert('PoWR Reference mined successfully!');
-    } else {
+  if (useMaxSpeed) {
+    // Full CPU loop
+    const startTime = performance.now();
+    while (true) {
+      const hexCode = codeValue.toString(16).padStart(12, '0');
+      const dataToHash = generatedReference.replace(/\| 000000000000/, `| ${hexCode}`);
+      const hashHex = CryptoJS.SHA256(dataToHash).toString();
+      const hashBig = BigInt('0x' + hashHex);
+      attempts++;
       codeValue++;
       if (codeValue > 0xFFFFFFFFFFFFn) codeValue = 0n;
+
+      // Update status every 1000 attempts to avoid freezing DOM too much
+      if (attempts % 1000 === 0) {
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+        statusDiv.innerHTML = `Code: <b>${hexCode}</b><br>Attempts: ${attempts}<br>Elapsed: ${elapsed}s`;
+      }
+
+      if (hashBig < maxHash) {
+        const finalRef = dataToHash + `[${hashHex}]`;
+        statusDiv.innerHTML = `Code: <b>${hexCode}</b><br>Attempts: ${attempts}<br><b>SUCCESS!</b>`;
+        document.getElementById('output').textContent = finalRef;
+        alert('PoWR Reference mined successfully!');
+        break;
+      }
     }
-  }, 1);
+  } else {
+    // Throttled mining using setInterval (old method)
+    miningInterval = setInterval(() => {
+      const hexCode = codeValue.toString(16).padStart(12, '0');
+      const dataToHash = generatedReference.replace(/\| 000000000000/, `| ${hexCode}`);
+      const hashHex = CryptoJS.SHA256(dataToHash).toString();
+      const hashValue = BigInt('0x' + hashHex);
+      attempts++;
+
+      statusDiv.innerHTML = `Code: <b>${hexCode}</b><br>Attempts: ${attempts}`;
+
+      if (hashValue < maxHash) {
+        clearInterval(miningInterval);
+        const finalRef = dataToHash + `[${hashHex}]`;
+        statusDiv.innerHTML += `<br><b>SUCCESS!</b>`;
+        document.getElementById('output').textContent = finalRef;
+        alert('PoWR Reference mined successfully!');
+      } else {
+        codeValue++;
+        if (codeValue > 0xFFFFFFFFFFFFn) codeValue = 0n;
+      }
+    }, 1);
+  }
 }
+
 
 function stopMining(){ clearInterval(miningInterval); document.getElementById('miningStatus').innerHTML+='<br>Mining stopped.'; }
 </script>
