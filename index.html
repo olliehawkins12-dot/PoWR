@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PoWR Reference Generator & Verifier</title>
+
+<style>
+body {
+  background: repeating-linear-gradient(45deg, #00ffff, #00ffff 10px, #ff00ff 10px, #ff00ff 20px);
+  font-family: "Comic Sans MS", "Courier New", monospace;
+  color: black;
+  margin: 0;
+  padding: 0;
+}
+.container {
+  width: 900px;
+  margin: 20px auto;
+  background: #ffffcc;
+  border: 6px ridge #000;
+  padding: 20px;
+}
+img.logo {
+  display: block;
+  margin: 0 auto 20px;
+  width: 600px;
+}
+h1,h2 { text-align: center; }
+table { width: 100%; border-collapse: collapse; background: #e0ffff; margin-bottom: 15px; }
+td, th { border: 3px outset #000; padding: 5px; vertical-align: top; }
+th { background: #ffccff; text-align: left; }
+input, textarea, select { width: 100%; box-sizing: border-box; font-family: "Courier New", monospace; }
+.info { color: blue; font-weight: bold; margin-left: 4px; position: relative; }
+.info:hover::after { content: attr(data-info); position: absolute; left: 0; top: 100%; background: #ffffcc; border: 2px ridge #000; padding: 5px; width: 300px; z-index: 10; display: block; white-space: normal; }
+button { font-size: 18px; padding: 10px 20px; background: #ff00ff; color: white; border: 4px outset #000; cursor: pointer; margin: 5px; }
+button:active { border: 4px inset #000; }
+.output { background: #f5f5f5; color: black; padding: 10px; border: 4px inset #666; white-space: pre-wrap; font-family: "Courier New", monospace; margin-top: 10px; }
+.intro { background: #ffffaa; border: 4px outset #000; padding: 10px; margin-bottom: 20px; }
+.tabs { text-align: center; margin-bottom: 20px; }
+.tabs button { font-size: 16px; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+<img src="logo.png" class="logo" alt="PoWR Logo">
+
+<div class="tabs">
+<button onclick="showPage('generate')">Generate Reference</button>
+<button onclick="showPage('verify')">Verify Reference</button>
+<button onclick="showPage('verifyBibliography')">Verify Bibliography</button>
+</div>
+
+<div id="generatePage">
+<h1>PoWR Reference Generator</h1>
+<div class="intro">
+Each reference must be computationally mined to introduce epistemic scarcity. By imposing a proof-of-work requirement, the system discourages frivolous citations and ensures that referenced claims represent a meaningful investment of cognitive and computational effort. This aligns citation density with author conviction and ensures a verifiable chain of scholarly trust.
+</div>
+
+<form id="powrForm">
+<!-- Authorship -->
+<table>
+<tr><th colspan="2">Authorship</th></tr>
+<tr><td>Author Name <span class="info" data-info="Primary individual or entity responsible for the content.">[i]</span></td><td><input name="author"></td></tr>
+<tr><td>Institution <span class="info" data-info="Affiliated organisation, publisher, or declaring body.">[i]</span></td><td><input name="institution"></td></tr>
+</table>
+
+<!-- Work Identity -->
+<table>
+<tr><th colspan="2">Work Identity</th></tr>
+<tr><td>Title / Description <span class="info" data-info="Formal title, or descriptive identifier if untitled.">[i]</span></td><td><input name="title"></td></tr>
+<tr><td>Medium <span class="info" data-info="The form this source takes (book, article, dataset, etc.).">[i]</span></td><td><select name="medium"><option value="">--select--</option><option>Book</option><option>Journal Article</option><option>Website</option><option>Video</option><option>Dataset</option><option>Oral Communication</option></select></td></tr>
+<tr><td>Language <span class="info" data-info="Language of the source material (ISO code recommended).">[i]</span></td><td><input name="language" value="en"></td></tr>
+</table>
+
+<!-- Location & Version -->
+<table>
+<tr><th colspan="2">Location & Version</th></tr>
+<tr><td>Primary Locator <span class="info" data-info="URL, DOI, ISBN, archive ID, or equivalent.">[i]</span></td><td><input name="locator"></td></tr>
+<tr><td>Version / Edition <span class="info" data-info="Edition number, revision tag, or version string.">[i]</span></td><td><input name="version"></td></tr>
+</table>
+
+<!-- Temporal Data -->
+<table>
+<tr><th colspan="2">Temporal Data</th></tr>
+<tr><td>Publication Date <span class="info" data-info="When this source was formally released.">[i]</span></td><td><input name="published" placeholder="YYYY-MM-DD"></td></tr>
+<tr><td>Date of Citing <span class="info" data-info="When YOU are asserting this reference.">[i]</span></td><td><input name="cited" placeholder="YYYY-MM-DD"></td></tr>
+<tr><td>Date Viewed <span class="info" data-info="When you personally accessed the source (for mutable sources like websites).">[i]</span></td><td><input name="viewed" placeholder="YYYY-MM-DD"></td></tr>
+<tr><td>Expiry (seconds) <span class="info" data-info="How long this reference is considered valid after citing. Default is 2592000 (30 days).">[i]</span></td><td><input name="expiry" value="2592000"></td></tr>
+</table>
+
+<!-- Claim Context -->
+<table>
+<tr><th colspan="2">Claim Context</th></tr>
+<tr><td>Claim Supported <span class="info" data-info="The exact claim this reference is intended to support.">[i]</span></td><td><textarea name="claim"></textarea></td></tr>
+<tr><td>Relevant Scope <span class="info" data-info="Page numbers, section, timestamp, or data range.">[i]</span></td><td><input name="scope"></td></tr>
+</table>
+
+<!-- Blockchain Reference -->
+<table>
+<tr><th colspan="2">Bibliography Reference</th></tr>
+<tr><td>Reference Type <span class="info" data-info="Genesis is first citation in the bibliography. Continuation references a PoWR ID from the preceding citation. Bibliography must be in alphabetical order.">[i]</span></td>
+<td><select name="refType" id="refType" onchange="togglePrevID()"><option value="">--select--</option><option>Genesis</option><option>Continuation</option></select></td></tr>
+<tr id="prevIDrow"><td>Previous Verification ID <span class="info" data-info="If continuation, provide the verification ID of the previous reference in the blockchain.">[i]</span></td><td><input name="prevID"></td></tr>
+</table>
+
+<center><button type="button" onclick="generatePoWR()">GENERATE REFERENCE</button></center>
+</form>
+
+<h2>Formatted PoWR Reference</h2>
+<div id="output" class="output"></div>
+<div id="mineControls" class="hidden">
+<button onclick="startMining()">Mine</button>
+<button onclick="stopMining()">Stop</button>
+<div id="miningStatus"></div>
+</div>
+</div>
+
+<div id="verifyPage" class="hidden">
+<h1>PoWR Reference Verifier</h1>
+<div class="intro">
+Paste a full PoWR reference below. This tool will check whether the reference was properly mined using the same proof-of-work formula, and it will deconstruct all the original input fields for you.
+</div>
+
+<form id="verifyForm">
+  <table>
+    <tr><td>Full PoWR Reference <span class="info" data-info="Include the entire reference, including the trailing hash at the end.">[i]</span></td></tr>
+    <tr><td><textarea id="verifyInput" style="width:100%; height:150px;"></textarea></td></tr>
+  </table>
+  <center><button type="button" onclick="verifyPoWR()">VERIFY REFERENCE</button></center>
+</form>
+
+<h2>Verification Results</h2>
+<div id="verifyOutput" class="output"></div>
+</div>
+
+<div id="verifyBibliography" class="hidden">
+<h1>PoWR Bibliography Verifier</h1>
+<div class="intro">
+Paste the entire bibliography here. Each reference must follow the PoWR format: [reference][hash].<br>
+- Blocks may be separated by spaces, newlines, or commas.<br>
+- The first block must be a GENESIS reference.<br>
+- Every continuation must reference the previous block's hash.<br>
+- All references must be valid (properly mined, within expiry, dates valid).<br>
+- References must appear in alphabetical order of the Author Name.<br>
+This verifier will check all of the above and display detailed errors if any issues are detected.
+</div>
+
+<form id="verifyBiblioForm">
+  <table>
+    <tr><td>Full Bibliography <span class="info" data-info="Include all references exactly as [reference][hash], separated by spaces, newlines, or commas.">[i]</span></td></tr>
+    <tr><td><textarea id="bibliographyInput" style="width:100%; height:250px;"></textarea></td></tr>
+  </table>
+  <center><button type="button" onclick="verifyBibliography()">VERIFY BIBLIOGRAPHY</button></center>
+</form>
+
+<h2>Bibliography Verification Results</h2>
+<div id="biblioOutput" class="output"></div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+<script src="powr.js"></script>
+<script>
+let miningInterval;
+let attempts = 0;
+let generatedReference = '';
+let codeValue = 0n;
+
+function showPage(page) {
+  document.getElementById('generatePage').classList.toggle('hidden', page !== 'generate');
+  document.getElementById('verifyPage').classList.toggle('hidden', page !== 'verify');
+  document.getElementById('verifyBibliography').classList.toggle('hidden', page !== 'verifyBibliography');
+}
+
+function togglePrevID() {
+  const refType = document.getElementById('refType').value;
+  document.getElementById('prevIDrow').style.display = refType === 'Continuation' ? 'table-row' : 'none';
+}
+
+function generatePoWR() {
+  const form = document.getElementById("powrForm");
+  const data = new FormData(form);
+  let errors = [];
+  let values = {};
+
+  for (const [key, value] of data.entries()) {
+    if (value.trim() === "" && key !== 'prevID') errors.push("Missing field: " + key);
+    else values[key] = value.trim();
+  }
+  if (isNaN(parseInt(values.expiry))) errors.push("Expiry must be a number (seconds).");
+  if (values.refType === "Continuation" && !values.prevID) errors.push("Continuation requires Previous Verification ID.");
+  if (errors.length > 0) { alert("Errors:\n"+errors.join("\n")); form.reset(); document.getElementById("output").textContent=''; togglePrevID(); return; }
+
+  generatedReference = '[';
+  if (values.refType==='Genesis') generatedReference+='GENESIS ';
+  generatedReference += `${values.author} (${values.published}). ${values.title}. ${values.medium}. ${values.institution}. Locator: ${values.locator}. Version: ${values.version}. Language: ${values.language}. Viewed: ${values.viewed}. Cited: ${values.cited}. Expires in: ${values.expiry}s. Claim: "${values.claim}". Scope: ${values.scope}.`;
+  if (values.refType==='Continuation') generatedReference += ` Previous Verification ID: ${values.prevID}.`;
+  generatedReference += ' | 000000000000]';
+
+  document.getElementById("output").textContent = generatedReference;
+  document.getElementById('mineControls').classList.remove('hidden');
+  attempts = 0;
+  codeValue = 0n;
+}
+
+function startMining() {
+  const expirySec = parseInt(new FormData(document.getElementById('powrForm')).get('expiry'));
+  const TWO_256 = 1n << 256n;
+
+  const hashesPerSec = 100n;      // 100 hashes/sec
+  const baseExpiry = 10800n;      // 3 hours in seconds
+  const desiredMiningTime = 1n;   // 1 second of mining corresponds to 3 hours
+
+  const expectedAttempts = (hashesPerSec * desiredMiningTime * BigInt(expirySec)) / baseExpiry;
+  const maxHash = TWO_256 / expectedAttempts;
+
+  const statusDiv = document.getElementById('miningStatus');
+  attempts = 0;
+  codeValue = 0n;
+
+  miningInterval = setInterval(() => {
+    const hexCode = codeValue.toString(16).padStart(12, '0');
+    const dataToHash = generatedReference.replace(/\| 000000000000/, `| ${hexCode}`);
+    const hashHex = CryptoJS.SHA256(dataToHash).toString();
+    const hashValue = BigInt('0x' + hashHex);
+    attempts++;
+
+    statusDiv.innerHTML = `Code: <b>${hexCode}</b><br>Attempts: ${attempts}`;
+
+    if (hashValue < maxHash) {
+      clearInterval(miningInterval);
+      const finalRef = dataToHash + `[${hashHex}]`;
+      statusDiv.innerHTML += `<br><b>SUCCESS!</b>`;
+      document.getElementById('output').textContent = finalRef;
+      alert('PoWR Reference mined successfully!');
+    } else {
+      codeValue++;
+      if (codeValue > 0xFFFFFFFFFFFFn) codeValue = 0n;
+    }
+  }, 1);
+}
+
+function stopMining(){ clearInterval(miningInterval); document.getElementById('miningStatus').innerHTML+='<br>Mining stopped.'; }
+</script>
+</body>
+</html>
