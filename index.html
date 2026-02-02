@@ -113,13 +113,11 @@ Each reference must be computationally mined to introduce epistemic scarcity. By
 <button onclick="startMining()">Mine</button>
 <button onclick="stopMining()">Stop</button>
 <div id="miningStatus"></div>
-</div>
-</div>
-<div id="mineControls" class="hidden">
 <span id="maxSpeedToggle" style="font-family: 'Comic Sans MS', monospace; font-size: 16px; cursor: pointer; user-select: none; padding: 20; font-weight:bolder;">
  MAX CPU SPEED <b style="color: blue;">[ ]</b>
- </div>
 </span>
+</div>
+</div>
 
 <script>
   let maxSpeedEnabled = false;
@@ -223,7 +221,7 @@ function generatePoWR() {
 }
 
 function startMining() {
-  const useMaxSpeed = document.getElementById('maxSpeed')?.checked; // checkbox for max CPU
+  const useMaxSpeed = maxSpeedEnabled; // checkbox for max CPU
   const expirySec = parseInt(new FormData(document.getElementById('powrForm')).get('expiry'));
   const TWO_256 = 1n << 256n;
   const hashesPerSec = 10000n;
