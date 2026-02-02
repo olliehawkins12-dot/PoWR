@@ -53,6 +53,7 @@ button:active { border: 4px inset #000; }
 <div id="generatePage">
 <h1>PoWR Reference Generator</h1>
 <div class="intro">
+<b>PoWR (Proof of Work Referencing) V1.1</b><p>
 Each reference must be computationally mined to introduce epistemic scarcity. By imposing a proof-of-work requirement, the system discourages frivolous citations and ensures that referenced claims represent a meaningful investment of cognitive and computational effort. This aligns citation density with author conviction and ensures a verifiable chain of scholarly trust.
 </div>
 
@@ -108,7 +109,7 @@ Each reference must be computationally mined to introduce epistemic scarcity. By
 
 <h2>Formatted PoWR Reference</h2>
 <div id="output" class="output"></div>
-<div id="mineControls" class="hiddens">
+<div id="mineControls" class="hidden">
 <button onclick="startMining()">Mine</button>
 <button onclick="stopMining()">Stop</button>
 <div id="miningStatus"></div>
@@ -223,7 +224,7 @@ function startMining() {
   const useMaxSpeed = document.getElementById('maxSpeed')?.checked; // checkbox for max CPU
   const expirySec = parseInt(new FormData(document.getElementById('powrForm')).get('expiry'));
   const TWO_256 = 1n << 256n;
-  const hashesPerSec = 100n;
+  const hashesPerSec = 10000n;
   const baseExpiry = 10800n;
   const desiredMiningTime = 1n;
   const expectedAttempts = (hashesPerSec * desiredMiningTime * BigInt(expirySec)) / baseExpiry;

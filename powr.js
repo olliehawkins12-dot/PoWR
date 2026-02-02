@@ -24,7 +24,7 @@ function verifyPoWR(input) {
 
   // Recompute maxHash using same mining logic
   const TWO_256 = 1n << 256n;
-  const hashesPerSec = 100n;
+  const hashesPerSec = 10000n;
   const baseExpiry = 10800n;
   const desiredMiningTime = 1n;
   const expectedAttempts = (hashesPerSec * desiredMiningTime * expirySec) / baseExpiry;
